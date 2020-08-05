@@ -1,0 +1,131 @@
+
+#include <LM35.h>
+
+#include <SimpleDHT.h>
+
+
+int pinDHT11 = 53;
+int coolingFan=50;
+int heatingFan=48;
+int heater=3;
+int LEDrow1=26;
+int LEDrow2=28;
+int LEDrow3=30;
+int LEDrow4=32;
+int pump=39;
+
+  float LM35=A0;
+SimpleDHT11 dht11;
+
+
+void setup(){
+  Serial.begin(115200);
+  pinMode(coolingFan,OUTPUT);
+  pinMode(heatingFan,OUTPUT);
+  pinMode(heater,OUTPUT);
+  pinMode(LEDrow1,OUTPUT);
+  pinMode(LEDrow2,OUTPUT);
+  pinMode(LEDrow3,OUTPUT);
+  pinMode(LEDrow4,OUTPUT);
+  pinMode(pump,OUTPUT);
+  
+  
+}
+
+void loop(){
+  temperature();
+  light();
+  humidity();
+}
+
+void temperature(){
+  int value= analogRead(A0);
+  float volts=(value/1024.0)*5.0;
+  float temp= volts*100.0;
+  Serial.print("temp=");
+  Serial.println(temp);
+  delay(1000);
+  if(temp<25){
+    digitalWrite(heater,HIGH);
+    digitalWrite(heatingFan,HIGH);
+  }
+  else{
+    digitalWrite(heater,LOW);
+    digitalWrite(heatingFan,LOW);
+  }     
+  if(temp>30){
+    digitalWrite(coolingFan,HIGH);
+  }
+else{
+    digitalWrite(coolingFan,LOW);
+  }
+}
+
+void light(){
+float ldrdata=analogRead(A1);
+float resistorVolt=(1024-ldrdata)/1024.0*5.0;
+float ldrVolt=5.0-resistorVolt;
+float ldrResistance= ldrVolt/resistorVolt*5000.0;
+float lux = (12518931)*(pow(ldrResistance,-1.405));
+float photons= lux*0.019;
+//Serial.println(photons);
+delay(1000);
+
+if(photons<50){
+  digitalWrite(LEDrow1,HIGH);
+  digitalWrite(LEDrow2,HIGH);
+  digitalWrite(LEDrow3,HIGH);
+  digitalWrite(LEDrow4,HIGH);
+}
+if(photons>100){
+  digitalWrite(LEDrow1,LOW);
+  digitalWrite(LEDrow2,LOW);
+  digitalWrite(LEDrow3,LOW);
+  digitalWrite(LEDrow4,LOW);
+}
+}
+
+void humidity() {
+
+  // start working...
+ //Serial.println("=================================");
+
+  //Serial.println("Sample DHT11...");
+
+  
+
+  // read without samples.
+
+  byte temperature = 0;
+
+  byte humidity = 0;
+
+  int err = SimpleDHTErrSuccess;
+ 
+
+  if ((err = dht11.read(pinDHT11, &temperature, &humidity, NULL)) != SimpleDHTErrSuccess) 
+  {
+
+    //Serial.print("Read DHT11 failed, err="); Serial.println(err);delay(1000);
+
+    return;
+
+  }
+
+  int humid=(int)humidity;
+
+  Serial.print("Humidity: ");
+ Serial.print(humid); Serial.println(" H");
+  // DHT11 sampling rate is 1HZ.
+  delay(2000);
+
+  if(humid<85){
+    digitalWrite(pump,HIGH);
+    digitalWrite(coolingFan,LOW);
+  }
+if(humid>94){
+  digitalWrite(coolingFan,HIGH);
+  digitalWrite(pump,LOW);
+}
+}
+  
